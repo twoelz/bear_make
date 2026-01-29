@@ -1,0 +1,25 @@
+# Test execution order
+# Each line contains a test case file name (without .sh extension)
+# Lines starting with # are comments and will be ignored
+# Blank lines are also ignored
+
+help_flag
+autodetect_makefile
+autodetect_git
+output_conflict
+custom_output
+no_clean_flag
+custom_make_args
+bear_flags
+default_behavior
+fallback_current_dir
+output_via_flags
+deeply_nested
+output_different_dir
+special_chars_path
+bear_append
+empty_flags
+relative_absolute_root
+relative_output_path
+symbolic_links
+write_permissions
