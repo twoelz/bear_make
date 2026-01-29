@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Test: --no-clean flag
 
+[[ "${BASH_SOURCE[0]}" == "${0}" ]] && exec "$(dirname "$0")/../test_bear_make.sh" "$(basename "${BASH_SOURCE[0]}" .sh)"
+
 run_test() {
   print_test "--no-clean flag"
   mkdir -p "$TEST_DIR/no_clean_test"

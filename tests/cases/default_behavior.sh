@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Test: Default behavior with no arguments
 
+[[ "${BASH_SOURCE[0]}" == "${0}" ]] && exec "$(dirname "$0")/../test_bear_make.sh" "$(basename "${BASH_SOURCE[0]}" .sh)"
+
 run_test() {
   print_test "Default behavior (no arguments)"
   mkdir -p "$TEST_DIR/default_test"

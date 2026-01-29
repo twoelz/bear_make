@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Test: No Makefile or .git found (fallback to current directory)
 
+[[ "${BASH_SOURCE[0]}" == "${0}" ]] && exec "$(dirname "$0")/../test_bear_make.sh" "$(basename "${BASH_SOURCE[0]}" .sh)"
+
 run_test() {
   print_test "Fallback when no Makefile or .git found"
   mkdir -p "$TEST_DIR/isolated_dir"

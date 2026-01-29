@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Test: Output to different directory
 
+[[ "${BASH_SOURCE[0]}" == "${0}" ]] && exec "$(dirname "$0")/../test_bear_make.sh" "$(basename "${BASH_SOURCE[0]}" .sh)"
+
 run_test() {
   print_test "Output to different directory"
   mkdir -p "$TEST_DIR/diff_output"

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Test: --output conflict detection
 
+[[ "${BASH_SOURCE[0]}" == "${0}" ]] && exec "$(dirname "$0")/../test_bear_make.sh" "$(basename "${BASH_SOURCE[0]}" .sh)"
+
 run_test() {
   print_test "Conflict detection for --output"
   mkdir -p "$TEST_DIR/conflict_test"

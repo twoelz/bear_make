@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Test: Custom make arguments
 
+[[ "${BASH_SOURCE[0]}" == "${0}" ]] && exec "$(dirname "$0")/../test_bear_make.sh" "$(basename "${BASH_SOURCE[0]}" .sh)"
+
 run_test() {
   print_test "Custom make arguments"
   mkdir -p "$TEST_DIR/make_args"

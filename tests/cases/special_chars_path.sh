@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Test: Special characters in paths
 
+[[ "${BASH_SOURCE[0]}" == "${0}" ]] && exec "$(dirname "$0")/../test_bear_make.sh" "$(basename "${BASH_SOURCE[0]}" .sh)"
+
 run_test() {
   print_test "Special characters in directory names"
   mkdir -p "$TEST_DIR/my project (test)"
