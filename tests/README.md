@@ -33,6 +33,7 @@ tests/
 
 3. **cases/*.sh** - Individual test files:
    - Each file contains one test case
+   - When run directly (e.g. `./cases/help_flag.sh`), re-execs via the main runner so the environment is set up
    - Defines a `run_test()` function
    - Uses shared helper functions: `print_test()`, `pass()`, `fail()`
    - Access to environment variables: `$TEST_DIR`, `$BEAR_MAKE`, etc.
@@ -41,12 +42,14 @@ tests/
 
 Adding a new test is simple:
 
-1. **Create a test file** in `cases/`:
+1. **Create a test file** in `cases/`, e.g. `cases/my_new_test.sh`, with the following contents:
+
    ```bash
-   cat > cases/my_new_test.sh <<'EOF'
    #!/usr/bin/env bash
    # Test: Description of what this tests
-   
+
+   [[ "${BASH_SOURCE[0]}" == "${0}" ]] && exec "$(dirname "$0")/../test_bear_make.sh" "$(basename "${BASH_SOURCE[0]}" .sh)"
+
    run_test() {
      print_test "My new test description"
      # ... test logic ...
@@ -56,8 +59,9 @@ Adding a new test is simple:
        fail "Test failed"
      fi
    }
-   EOF
    ```
+
+   The line after the comment ensures that if someone runs the test script directly (e.g. `./cases/my_new_test.sh`), it re-execs via the main runner so the environment and helpers are set up correctly.
 
 2. **Add it to test_list.txt**:
    ```
