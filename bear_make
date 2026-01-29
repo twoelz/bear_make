@@ -5,21 +5,44 @@ SCRIPT_NAME="$(basename "${BASH_SOURCE[0]:-$0}")"
 
 usage() {
   cat <<EOF
-Usage: $SCRIPT_NAME [--root DIR] [--output FILE] [--no-clean] [--] [make args...]
+Usage: $SCRIPT_NAME [--root DIR] [--output FILE] [--no-clean] [--flags FLAGS] [--] [make args...]
 
 Generates a clang compilation database (compile_commands.json) using Bear.
+
+Key features:
+- Auto-detection of project root (walks up to find Makefile or .git)
+- Automatic clean build (runs 'make clean' first to capture all compilation commands)
+- Sensible defaults (outputs to <project_root>/compile_commands.json, runs 'make all')
+- Safety checks (verifies bear is installed)
+- Flexibility (customizable root, output, make args, and full bear flags support)
+
+Options:
+  -r, --root DIR       Specify the project root directory (default: auto-detected)
+  -o, --output FILE    Specify the output file path (default: <root>/compile_commands.json)
+  --no-clean           Skip running 'make clean' before build
+  --flags FLAGS        Pass additional flags to bear (e.g. "--append --verbose")
+                       Run 'bear --help' to see all available bear flags
+  -h, --help           Show this help message and exit
+  --                   Separator: everything after goes to make command
 
 Defaults:
 - Root: auto-detected by walking up from \$PWD (prefers a directory with Makefile, else .git)
 - Output: <root>/compile_commands.json
 - Build:   make all
 - Clean:   runs 'make clean' first (disable with --no-clean)
+
+Examples:
+  $SCRIPT_NAME                       # Simple usage with defaults
+  $SCRIPT_NAME --flags "--append"    # Append to existing compile_commands.json
+  $SCRIPT_NAME -- clean all          # Pass 'clean all' to make
+  $SCRIPT_NAME --flags "--verbose" -- re
 EOF
 }
 
 ROOT_DIR=""
 OUT_FILE=""
 DO_CLEAN=1
+BEAR_FLAGS=()
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -34,6 +57,10 @@ while [[ $# -gt 0 ]]; do
   --no-clean)
     DO_CLEAN=0
     shift
+    ;;
+  --flags)
+    read -ra BEAR_FLAGS <<< "${2:-}"
+    shift 2
     ;;
   -h | --help)
     usage
@@ -72,6 +99,20 @@ if [[ "$OUT_FILE" != /* ]]; then
   OUT_FILE="$ROOT_DIR/$OUT_FILE"
 fi
 
+# Check for --output conflict in BEAR_FLAGS
+OUTPUT_IN_FLAGS=0
+for flag in "${BEAR_FLAGS[@]}"; do
+  if [[ "$flag" == "--output" ]]; then
+    OUTPUT_IN_FLAGS=1
+    if [[ -n "$OUT_FILE" && "$OUT_FILE" != "$ROOT_DIR/compile_commands.json" ]]; then
+      echo "Error: Cannot use --output in both script options and --flags."
+      echo "Use either '--output FILE' OR '--flags \"--output FILE\"', not both."
+      exit 1
+    fi
+    break
+  fi
+done
+
 echo "Generating a clang compilation database (compile_commands.json) using Bear."
 
 if ! command -v bear >/dev/null 2>&1; then
@@ -93,6 +134,11 @@ fi
 if [[ $DO_CLEAN -eq 1 && -f Makefile ]]; then
   make clean
 fi
-bear --output "$OUT_FILE" -- "${BUILD_CMD[@]}"
 
-echo "Wrote $OUT_FILE"
+if [[ $OUTPUT_IN_FLAGS -eq 1 ]]; then
+  bear "${BEAR_FLAGS[@]}" -- "${BUILD_CMD[@]}"
+  echo "Build complete. Output file specified in --flags."
+else
+  bear --output "$OUT_FILE" "${BEAR_FLAGS[@]}" -- "${BUILD_CMD[@]}"
+  echo "Wrote $OUT_FILE"
+fi
