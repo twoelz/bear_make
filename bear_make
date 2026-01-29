@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_NAME="$(basename "${BASH_SOURCE[0]:-$0}")"
+
+usage() {
+  cat <<EOF
+Usage: $SCRIPT_NAME [--root DIR] [--output FILE] [--no-clean] [--] [make args...]
+
+Generates a clang compilation database (compile_commands.json) using Bear.
+
+Defaults:
+- Root: auto-detected by walking up from \$PWD (prefers a directory with Makefile, else .git)
+- Output: <root>/compile_commands.json
+- Build:   make all
+- Clean:   runs 'make clean' first (disable with --no-clean)
+EOF
+}
+
+ROOT_DIR=""
+OUT_FILE=""
+DO_CLEAN=1
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+  -r | --root)
+    ROOT_DIR="${2:-}"
+    shift 2
+    ;;
+  -o | --output)
+    OUT_FILE="${2:-}"
+    shift 2
+    ;;
+  --no-clean)
+    DO_CLEAN=0
+    shift
+    ;;
+  -h | --help)
+    usage
+    exit 0
+    ;;
+  --)
+    shift
+    break
+    ;;
+  *)
+    break
+    ;;
+  esac
+done
+
+if [[ -z "$ROOT_DIR" ]]; then
+  dir="$PWD"
+  while true; do
+    if [[ -f "$dir/Makefile" ]]; then
+      ROOT_DIR="$dir"
+      break
+    fi
+    if [[ -d "$dir/.git" ]]; then
+      ROOT_DIR="$dir"
+      break
+    fi
+    [[ "$dir" == "/" ]] && break
+    dir="$(dirname "$dir")"
+  done
+  : "${ROOT_DIR:=$PWD}"
+fi
+
+ROOT_DIR="$(cd "$ROOT_DIR" && pwd)"
+: "${OUT_FILE:=$ROOT_DIR/compile_commands.json}"
+if [[ "$OUT_FILE" != /* ]]; then
+  OUT_FILE="$ROOT_DIR/$OUT_FILE"
+fi
+
+echo "Generating a clang compilation database (compile_commands.json) using Bear."
+
+if ! command -v bear >/dev/null 2>&1; then
+  echo "Error: 'bear' is not installed."
+  echo "Install it first. (In Ubuntu/Debian: sudo apt install bear)"
+  exit 1
+fi
+
+cd "$ROOT_DIR"
+
+BUILD_CMD=(make)
+if [[ $# -gt 0 ]]; then
+  BUILD_CMD+=("$@")
+else
+  BUILD_CMD+=(all)
+fi
+
+# Ensure objects are rebuilt so bear captures *all* compilation commands.
+if [[ $DO_CLEAN -eq 1 && -f Makefile ]]; then
+  make clean
+fi
+bear --output "$OUT_FILE" -- "${BUILD_CMD[@]}"
+
+echo "Wrote $OUT_FILE"
