@@ -1,6 +1,6 @@
 # bear_make
 
-**bear_make** generates a [clang compilation database](https://clang.llvm.org/docs/JSONCompilationDatabase.html) (`compile_commands.json`) using Bear (<https://github.com/rizsotto/Bear>) to intercept compiler calls during a make build primarilyfor a C/C++ project. It wraps the `bear -- make` command with automatic options, root/output detection, and validations, so you get the compilation database with minimal setup—useful for tooling that relies on it (e.g. clangd, clang-tidy, ccls).
+**bear_make** generates a [clang compilation database](https://clang.llvm.org/docs/JSONCompilationDatabase.html) (`compile_commands.json`) using Bear (<https://github.com/rizsotto/Bear>) to intercept compiler calls during a make build primarily for a C/C++ project. It wraps the `bear -- make` command with automatic options, root/output detection, and validations, so you get the compilation database with minimal setup—useful for tooling that relies on it (e.g. clangd, clang-tidy, ccls).
 
 ## Features
 
