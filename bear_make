@@ -153,7 +153,42 @@ fi
 if [[ $OUTPUT_IN_FLAGS -eq 1 ]]; then
   bear "${BEAR_FLAGS[@]}" -- "${BUILD_CMD[@]}"
   echo "Build complete. Output file specified in --flags."
+  
+  # Try to extract the custom output file from BEAR_FLAGS to clean it up, 
+  # otherwise fall back to checking the default $OUT_FILE location.
+  TARGET_JSON="$OUT_FILE"
+  for ((i=0; i<${#BEAR_FLAGS[@]}; i++)); do
+    if [[ "${BEAR_FLAGS[i]}" == "--output" && -n "${BEAR_FLAGS[i+1]:-}" ]]; then
+      TARGET_JSON="${BEAR_FLAGS[i+1]}"
+      break
+    fi
+  done
 else
   bear --output "$OUT_FILE" "${BEAR_FLAGS[@]}" -- "${BUILD_CMD[@]}"
   echo "Wrote $OUT_FILE"
+  TARGET_JSON="$OUT_FILE"
+fi
+
+# ==============================================================================
+# Post-Processing: Relative path conversions for school cluster portability
+# ==============================================================================
+if [[ -f "$TARGET_JSON" ]]; then
+  echo "Post-processing $TARGET_JSON for cross-machine portability..."
+  
+  # 1. Flatten the directory key to current directory relative context
+  sed -i 's|"directory": ".*"|"directory": "."|g' "$TARGET_JSON"
+  
+  # 2. Strip the absolute project root path directory from source file targets
+  # We use the explicitly discovered $ROOT_DIR variable here for accuracy
+  sed -i "s|$ROOT_DIR/||g" "$TARGET_JSON"
+  
+  # 3. Strip absolute pathing of standard system compiler binaries
+  sed -i 's|"/usr/bin/c++"|"c++"|g' "$TARGET_JSON"
+  sed -i 's|"/usr/bin/g++"|"g++"|g' "$TARGET_JSON"
+  sed -i 's|"/usr/bin/cc"|"cc"|g' "$TARGET_JSON"
+  sed -i 's|"/usr/bin/gcc"|"gcc"|g' "$TARGET_JSON"
+  
+  echo "Portability cleanup complete."
+else
+  echo "Warning: Could not find generated file for post-processing cleanup."
 fi
