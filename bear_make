@@ -20,6 +20,7 @@ Options:
   -r, --root DIR       Specify the project root directory (default: auto-detected)
   -o, --output FILE    Specify the output file path (default: <root>/compile_commands.json)
   --no-clean           Skip running 'make clean' before build
+  --clangd             Write .clangd beside compile_commands.json if missing (see --help)
   --flags FLAGS        Pass additional flags to bear (e.g. "--append --verbose")
                        Run 'bear --help' to see all available bear flags
   -h, --help           Show this help message and exit
@@ -34,6 +35,7 @@ Defaults:
 Examples:
   $SCRIPT_NAME                       # Simple usage with defaults
   $SCRIPT_NAME --flags "--append"    # Append to existing compile_commands.json
+  $SCRIPT_NAME --clangd              # Add .clangd next to compile_commands.json
   $SCRIPT_NAME -- clean all          # Pass 'clean all' to make
   $SCRIPT_NAME --flags "--verbose" -- re
 EOF
@@ -42,6 +44,7 @@ EOF
 ROOT_DIR=""
 OUT_FILE=""
 DO_CLEAN=1
+DO_CLANGD=0
 BEAR_FLAGS=()
 
 while [[ $# -gt 0 ]]; do
@@ -56,6 +59,10 @@ while [[ $# -gt 0 ]]; do
     ;;
   --no-clean)
     DO_CLEAN=0
+    shift
+    ;;
+  --clangd)
+    DO_CLANGD=1
     shift
     ;;
   --flags)
@@ -191,4 +198,18 @@ if [[ -f "$TARGET_JSON" ]]; then
   echo "Portability cleanup complete."
 else
   echo "Warning: Could not find generated file for post-processing cleanup."
+fi
+
+if [[ $DO_CLANGD -eq 1 && -f "${TARGET_JSON:-}" ]]; then
+  CLANGD_DIR="$(cd "$(dirname "$TARGET_JSON")" && pwd)"
+  CLANGD_FILE="$CLANGD_DIR/.clangd"
+  if [[ -f "$CLANGD_FILE" ]]; then
+    echo "clangd config already exists, skipped: $CLANGD_FILE"
+  else
+    cat > "$CLANGD_FILE" <<'EOF'
+CompileFlags:
+  CompilationDatabase: .
+EOF
+    echo "Wrote $CLANGD_FILE"
+  fi
 fi

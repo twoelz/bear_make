@@ -8,6 +8,7 @@ autodetect_makefile
 autodetect_git
 output_conflict
 custom_output
+clangd_flag
 no_clean_flag
 custom_make_args
 bear_flags
